@@ -1,10 +1,10 @@
-function [ output_args ] = mpp24_exp(mode)
+function [ output_args ] = mpp_2023(mode)
 pTag='MPP_2023'; 
 
 if nargin == 0
     mode = 1;
 end
-    NSI = 1;        % Noise Supressing Index (1/NSI) дисперсия шума.
+    NSI = 1;        % Noise Supressing Index (1/NSI) 
     NSIstr = '1';   % num2str(NSI);
     reg_mode = 1;   % 1-RidgeRegression, 2-StepWise Regression
     % 
@@ -14,8 +14,8 @@ end
                     
     H = 20;         % 
         
-    fsBase  = 1;  % FixedShare Alpha (1 как в статье!)
-    fsMode  = 1; % 1-Just plane FixedShare version, 2-use history
+    fsBase  = 1;  % FixedShare Alpha (1-as in paper)
+    fsMode  = 1;  % 1-Just plane FixedShare version, 2-use history
     fsTag   = ['FS' num2str(fsBase) 'M' num2str(fsMode)]; 
       
     if fsBase>0  
@@ -229,13 +229,7 @@ end
         q=1;
     end
             
-    %% 
-    % 
-    % 
-    % 
-    % 
-    % 
-    % 
+  
     
     %% 
     for t = H:T-1
@@ -257,21 +251,13 @@ end
         end
     end             
     
-    %% 
-    %% 
+    
     %% Main part of program. 
-    %% 
-    %% 
     
     for t = H+1:T    % 
-        % 
-        % 
-        % 
-        % 
+       
         N = t-H; % 
-        % 
-        % 
-        
+       
         if N>1 % 
             %% 
             if initW==2 % 
@@ -297,9 +283,9 @@ end
             WWv(j,t) = WWv(j,t)*exp(-etaV*Rts(j,t));
         end
         
-        %% Строим агрегаторы и оцениваем их потери
-        x_cur = X(t,:);     % Текущий входной вектор ("сигнал")
-        y_cur = Y(t);       % Текущий отклик
+        %% 
+        x_cur = X(t,:);     % Signal
+        y_cur = Y(t);       % Response
         
         F_cur = Frol(:,H:H+N-1);   % F_cur - N active experts 
                 
@@ -343,14 +329,14 @@ end
             error(['Illegal fsMode value - ' num2str(fsMode) ' !']);
         end
 
-        % Warmuth
+        % Wrm
         yH_w = getGammaW(w_cur_w,F_cur,x_cur); % 
 %       y_h =(x_cur*F_cur)*w_cur_w;  
         Fwrm(:,t) = F_cur*w_cur_w;  % Save to Fwrm  
         Rwrm(t) = (yH_w-y_cur)*(yH_w-y_cur);  % R2 Losses
         
         %% AA
-        w_cur_v = WWv(H:H+N-1,t);  % Cumulated weights (Vovk)
+        w_cur_v = WWv(H:H+N-1,t);  % Cumulated weights AA
         % 
         sumW = sum(w_cur_v);
         w_cur_v = w_cur_v/sumW;              
@@ -479,12 +465,12 @@ end
     
     
     %% 
-    Segm_count = size(Segments,1); % Число сегментов
+    Segm_count = size(Segments,1); % 
     BLM_list = nan(Segm_count,K);  % Best hindsight model for each segment
     %% Best local
     for s = 1:Segm_count 
         % - 
-        e_local_ind = (Segments(s,1)+H-1:Segments(s,2)); % Валидные модели       
+        e_local_ind = (Segments(s,1)+H-1:Segments(s,2)); % Valid models       
         % 
         tt = (Segments(s,1):Segments(s,2));
         %% 
@@ -509,10 +495,10 @@ end
     
   %% 
     h = figure('Position',fig_position);
-    figname = ['Figure1-AA-BLM-Losses-' figname_suffix '.png'];
+    figname = ['AA-nAA-CE-Losses-' figname_suffix '.png'];
     legend_list =[];
     tt    = (H+1:T);
-    VcM   = cumsum(Rvvk(tt));    % Кумул. суммы потерь
+    VcM   = cumsum(Rvvk(tt));    % CumLosses
     
     RbmwcM = cumsum(Rbmw);
     
@@ -521,15 +507,18 @@ end
     plot(tt,VcM,':r','LineWidth',2);    hold on
     legend_list=[legend_list {['  AA  ']}];
     
+    plot(tt,RbmwcM(tt),'b','LineWidth',2);   hold on
+    legend_list=[legend_list {['  CE  ']}];
+    grid on;
+    saveas(h,'Figure1.png');
+    
+    
     plot(tt,nVcL,':m','LineWidth',1);    hold on
     legend_list=[legend_list {[' nAA  ']}];
     
-    plot(tt,RbmwcM(tt),'b','LineWidth',2);   hold on
-    legend_list=[legend_list {['  CE  ']}];
-    
     legend(legend_list,'location','west');
     
-    title(['Accumulated Losses Means of AA, nAA and CE. ('... 
+    title(['Accumulated Losses of AA, CE and nAA. ('... 
                                           rcd(figname_suffix) ')']);
     grid on
     saveas(h,figname);
@@ -540,10 +529,8 @@ end
     Fgen = GMW';
     rr_sigma = sigma;
     
-    %% Вспомогательные иллюстрации по локальным экспертам
-    %% Считаем и рисуем накопленные потери локальных моделей
-    %% Надо не  RRcur!! (это снимок по времени), а заново вычислять все
-    %% потери локальных экспертов на полной выборке!!
+    %% Additional illustration
+    
     draw_local_model_losses = [];
     for dd = draw_local_model_losses   
         RRcur = zeros(T,T);
@@ -611,14 +598,14 @@ function [r] = rcd(InStrin)
     
 
 function [LM_ind_sorted] = sort_local_experts(X,Y,tt,Frol,e_local_ind)
-     eLossesList = nan(1,length(e_local_ind));  % Потери экспертов на tt
+     eLossesList = nan(1,length(e_local_ind));  % Expert losses
      r2list = nan(length(tt),1);
      
      Xtest = X(tt',:);
      Ytest = Y(tt');
      
-     for i = 1:length(e_local_ind)             % По экспертам
-         f_current = Frol(:,e_local_ind(i));   % Очередной эксперт
+     for i = 1:length(e_local_ind)             % 
+         f_current = Frol(:,e_local_ind(i));   % 
          for j=1:length(tt)
             r2list(j) = get_loss2(Xtest(j,:),f_current,Ytest(j));
          end
@@ -632,14 +619,14 @@ function [LM_ind_sorted] = sort_local_experts(X,Y,tt,Frol,e_local_ind)
     
  function [BLM,BLM_ind] = get_best_local_expert(X,Y,tt,Frol,e_local_ind)
     
-     eLossesList = nan(1,length(e_local_ind));  % Потери экспертов на tt
+     eLossesList = nan(1,length(e_local_ind));  % 
      r2list = nan(length(tt),1);
      
      Xtest = X(tt',:);
      Ytest = Y(tt');
      
-     for i = 1:length(e_local_ind)             % По экспертам
-         f_current = Frol(:,e_local_ind(i));   % Очередной эксперт
+     for i = 1:length(e_local_ind)             % 
+         f_current = Frol(:,e_local_ind(i));   % 
          for j=1:length(tt)
             r2list(j) = get_loss2(Xtest(j,:),f_current,Ytest(j));
          end
@@ -701,7 +688,7 @@ function [X,Y,Segments,bw,iShift,mIndex,b_param] = ...
         disp([Ymin Ymax]);  
         b_param = max(abs(Ymin),abs(Ymax));
         if b_param>b_upper
-            error('Illegal value of semyinterval!')
+            error('Illegal value of b!')
         end
         q=1
         
@@ -724,10 +711,10 @@ function [R] = explore_experts_on_segment(Segments,SegmInd,GMW,Y,X,Frol,Fwrm,...
 
 fig_position = [200 50 700 480]; % Размер окна для графиков                 
 %% 1.Извлекаем генерирующую модель и сортируем
-K = size(Frol,1);                       % Размерность входных переменных
-cur_segment = Segments(SegmInd,:);      % Информация о рабочем сегменте
-G           = GMW(cur_segment(3),:);    % Генерирующая модель 
-[Gs,ind]    = sort(G);                  % Компоненты генератора (ascended)
+K = size(Frol,1);                       % 
+cur_segment = Segments(SegmInd,:);      % 
+G           = GMW(cur_segment(3),:);    % 
+[Gs,ind]    = sort(G);                  % (ascended)
 
 %  tt 
 tt = (cur_segment(1)+H-1:cur_segment(2)); 
@@ -762,8 +749,8 @@ title(title_str);
 saveas(h2,['Gen+Wrm' rcd(figname_suffix) '-S' num2str(SegmInd) '.png']); 
 R = 0;
 
-R2_list = zeros(1,length(tt));  % Суммарные потери всех Ef экспертов
-Wrm_list = zeros(1,length(tt)); % Суммарные потери всех Wrm агрегаторов
+R2_list = zeros(1,length(tt));  % Total losses of Ef 
+Wrm_list = zeros(1,length(tt)); % Total losses of Wrm 
 EF_R2sum = zeros(length(tt),1);
 EWrm_sum = zeros(length(tt),1);
 for i = 1:length(tt)        % 
